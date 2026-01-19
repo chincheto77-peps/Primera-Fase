@@ -39,7 +39,7 @@
                 .then(response => response.json())
                 .then(result => {
                     if (result.status == "OK") {
-                        location.href = "jugadores.html"; //He cambiado de chuches.html a jugadores.html
+                        location.href = "jugadores.html"; //He cambiado de jugadores.html a jugadores.html
                     } else {
                         document.getElementsByClassName("error")[0].style.display = "block";
                     }
@@ -50,7 +50,7 @@
 </head>
 
 <body>
-    <h1>BIENVENIDO AL SISTEMA DEL PROFE</h1>
+    <h1>INICIE SESIÓN</h1>
     <label>Usuario</label><input type="text" name="username" id="username"><br>
     <label>Clave</label><input type="password" name="password" id="password"><br>
     <label class="error">Usuario/clave erronea</label>

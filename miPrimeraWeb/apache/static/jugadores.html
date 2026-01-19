@@ -21,14 +21,13 @@
             let tbody=document.getElementsByTagName("tbody")[0];
             tbody.innerText="";
 
-            lista.forEach(chuche => {
+            lista.forEach(jugador => {
                 let texto=`<tr>
                         <td><img src="${jugador.foto}" width="70"></td>
                         <td>${jugador.nombre}</td>
                         <td>${jugador.descripcion}</td>
                         <td>${jugador.estadisticas}</td>
                         <td>${jugador.valor_de_mercado}</td>
-                        <td>${jugador.valor_de_mercado_variables}</td>
                         <td>`
                 texto+=`<a href="editar_jugador.html?id=${jugador.id}" class="button is-info">Editar</a>
                         </td>
@@ -124,7 +123,7 @@
     <section class="section">
         <div class="columns">
             <div class="column">
-                <h3 class="is-size-3">Chuches</h3>
+                <h3 class="is-size-3">Jugadores</h3>
                 <a id="enlaceAgregar" href="clausulazo_jugadores.html" class="button is-success">Agregar</a>
                 <table class="table">
                     <thead>

@@ -4,13 +4,13 @@ services:
     container_name: mariadb
     restart: always
     environment:
-      MARIADB_ROOT_PASSWORD: example
-      MARIADB_USER: agente
-      MARIADB_USER_PASSWORD: 0traClave
+      MARIADB_ROOT_PASSWORD: 1234
+      MARIADB_USER: root
+      MARIADB_USER_PASSWORD: 1234
       MARIADB_DATABASE: ciber
     volumes:
       - mariadb_data:/var/lib/mysql
-      - ./Chuches.sql://docker-entrypoint-initdb.d/Chuches.sql:ro
+      - ./Jugadores.sql://docker-entrypoint-initdb.d/Jugadores.sql:ro
     user: mysql
   phpmyadmin:
     image: phpmyadmin
@@ -27,7 +27,7 @@ services:
     container_name: python
     environment:
       DB_USERNAME: root
-      DB_PASSWORD: example
+      DB_PASSWORD: 1234
       DB_DATABASE: ciber
       DB_HOST: mariadb
       DB_PORT: 3306
@@ -39,6 +39,8 @@ services:
     build: ./apache #./waf/ en un futuro
     ports:
       - 9090:80
+    volumes:
+      - ./apache:/var/www/html
     depends_on:
       - python
     links:
