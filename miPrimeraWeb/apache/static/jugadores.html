@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EJEMPLO APP WEB CON CRUD</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+    <style>
+        .oculto{
+            display: none;
+        }
+    </style>
+    <script>
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        onload=function(){
+            clausulazojugadores();
+        }
+        function pintarjugadores(lista){
+            let tbody=document.getElementsByTagName("tbody")[0];
+            tbody.innerText="";
+
+            lista.forEach(chuche => {
+                let texto=`<tr>
+                        <td><img src="${jugador.foto}" width="70"></td>
+                        <td>${jugador.nombre}</td>
+                        <td>${jugador.descripcion}</td>
+                        <td>${jugador.estadisticas}</td>
+                        <td>${jugador.valor_de_mercado}</td>
+                        <td>${jugador.valor_de_mercado_variables}</td>
+                        <td>`
+                texto+=`<a href="editar_jugador.html?id=${jugador.id}" class="button is-info">Editar</a>
+                        </td>
+                        <td>
+                            <button class="button is-danger" onclick="destituirjugador(${jugador.id})">Destituir</button>
+                        </td>`
+                texto+=`</tr>`;
+                tbody.innerHTML+=texto                            
+            });
+        }
+        function clausulazojugadores(){
+            var requestOptions = {
+                method: 'GET',
+                headers: myHeaders,
+            };
+
+            fetch("/api/jugadores/", requestOptions)
+                .then(response => response.json())
+                .then(result => {
+                    console.log(result);
+                    pintarjugadores(result);
+                })
+                .catch(error => {
+                    console.log('error', error);
+                    alert("Ha habido un error al recuperar los jugadores. Refresque la página")
+                });
+        }
+        function destituirjugadores(id){
+            var requestOptions = {
+                method: 'DELETE',
+                headers: myHeaders,
+            };
+
+            fetch("/api/jugadores/"+id, requestOptions)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status == "OK"){
+                        alert("Jugador destituido")
+                        clausulazojugadores();
+                    } else {
+                        alert("El jugador no ha podido ser destituido")
+                    }
+                })
+                .catch(error => {
+                    console.log('error', error);
+                    alert("Se ha producido un error y el jugador no ha podido ser destituido")
+                });
+        }
+        function cerrarSesion(){
+            var requestOptions = {
+                method: 'GET',
+                headers: myHeaders
+            };
+            fetch("/api/usuarios/logout", requestOptions)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status == "OK"){
+                        location.href="index.html";
+                    } else {
+                        alert("No se ha podido cerrar sesión")
+                    }
+                })
+                .catch(error => {
+                    console.log('error', error);
+                    alert("Se ha producido un error y no se ha podido cerrar sesión")
+                });
+
+        }
+    </script>
+</head>
+<body>
+    <nav class="navbar is-warning" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <button class="navbar-burger is-warning button" aria-label="menu" aria-expanded="false"
+                data-target="navbarBasicExample">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </button>
+        </div>
+        <div class="navbar-menu">
+            <div class="navbar-start">
+                <a class="navbar-item" href="jugadores.html">Jugadores</a>
+                <a class="navbar-item" href="ficheros.html">Archivos</a>
+                <a class="navbar-item" href="javascript:cerrarSesion()">Cerrar sesion</a>
+            </div>
+            <div class="navbar-end">
+                <div class="navbar-item">
+                </div>
+            </div>
+        </div>
+    </nav>
+    <section class="section">
+        <div class="columns">
+            <div class="column">
+                <h3 class="is-size-3">Chuches</h3>
+                <a id="enlaceAgregar" href="clausulazo_jugadores.html" class="button is-success">Agregar</a>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Nombre</th>
+                            <th>Descripcion</th>
+                            <th>Estadisticas</th>
+                            <th>Valor de Mercado</th>
+                            <th>Valor de Mercado + Variables</th>
+                            <th>Editar Posicion</th>
+                            <th>Destituir</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                   </tbody>
+                </table>
+            </div>
+        </div>  
+    </section>    
+</body>
+</html>

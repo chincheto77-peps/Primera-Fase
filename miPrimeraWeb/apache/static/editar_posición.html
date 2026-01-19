@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Last-Modified" content="0">
+    <title>EJEMPLO APP apache CON CRUD</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+    <script>
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        var queryString = window.location.search;
+        var urlParams = new URLSearchParams(queryString);
+        var id = urlParams.get('id');
+        onload = function () {
+            obtenerDatosJugador(id);
+        }
+        function obtenerDatosJugador(id) {
+            var requestOptions = {
+                method: 'GET',
+                headers: myHeaders
+            };
+
+            fetch("/api/jugadores/" + id, requestOptions)
+                .then(response => response.json())
+                .then(result => pintarJugadores(result))
+                .catch(error => {
+                    alert("Ha habido un error al recuperar los datos del libro");
+                    location.href = "jugadores.html";
+                });
+
+        }
+        function pintarJugadores(jugador) {
+            console.log(jugador);
+            
+            document.getElementById("nombre").value = jugador.nombre;
+            document.getElementById("descripcion").value = jugador.descripcion;
+            document.getElementById("estadisticas").value = jugador.estadisticas;
+            document.getElementById("valor de mercado").value = jugador.valor_de_mercado;
+            document.getElementById("foto").src = jugador.foto;
+        }
+
+        function guardar() {
+            let nombre = document.getElementById("nombre").value;
+            let descripcion= document.getElementById("descripcion").value;
+            let estadisticas = document.getElementById("estadisticas").value;
+            let valor_de_mercado = document.getElementById("Valor de mercado").value;
+            let valor_de_mercado_variables = document.getElementById("Valor de mercado + variables").value;
+            let foto = document.getElementById("foto").value;
+            let datos = JSON.stringify({
+                "id": id,
+                "nombre": nombre,
+                "descripcion": descripcion,
+                "estadisticas": estadisticas,
+                "valor de mercado": valor_de_mercado,
+                "valor de mercado + variables": valor_de_mercado_variables,
+                "foto": foto
+            });
+            var requestOptions = {
+                method: 'PUT',
+                headers: myHeaders,
+                body: datos
+            };
+
+            console.log(requestOptions);
+            
+
+            fetch("/api/jugadores/", requestOptions)
+                .then(response => response.json())
+                .then(result => {
+                    
+                    if (result.status == "OK") {
+                        alert("Posicion modificada")
+                        location.href = "jugadores.html"
+                    } else {
+                        alert("El jugador no ha podido ser modificado")
+                    }
+                })
+                .catch(error => {
+                    console.log('error', error);
+                    alert("Se ha producido un error y el jugador no ha podido ser modificado")
+                });
+        }
+    </script>
+</head>
+
+<body>
+    <nav class="navbar is-warning" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <button class="navbar-burger is-warning button" aria-label="menu" aria-expanded="false"
+                data-target="navbarBasicExample">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </button>
+        </div>
+        <div class="navbar-menu">
+            <div class="navbar-start">
+                <a class="navbar-item" href="jugadores.html">Jugadores</a>
+            </div>
+            <div class="navbar-end">
+                <div class="navbar-item">
+                </div>
+            </div>
+        </div>
+    </nav>
+    <section class="section">
+        <div class="columns">
+            <div class="column">
+                <h3 class="is-size-3">Editar posicion</h3>
+                <label for="nombre">Nombre:</label>
+                <input required type="text" class="input" placeholder="Nombre" name="nombre" id="nombre">
+                <label for="descripcion">Descripcion</label>
+                <input required type="text" class="input" placeholder="Descripcion" name="descripcion" id="descripcion">
+                <label for="estadisticas">Estadisticas</label>
+                <input required type="text" class="input" placeholder="Estadisticas" name="estadisticas" id="estadisticas">
+                <label for="valor_de_mercado">Valor del mercado</label>
+                <input required type="number" class="input" placeholder="Valor de mercado" name="valor de mercado" id="valor de mercado">
+                <input required type="text" class="input" placeholder="Foto" name="foto" id="foto">                
+                <input required type="file" class="input" placeholder="Archivo Foto" name="filefoto" id="filefoto">
+                <img src="#" alt="Foto" width="500" height="600" id="foto">
+                <button type="button" onclick="guardar()" class="button is-success mt-2">Guardar</button>
+                <a href="jugadores.html" class="button is-primary mt-2">Volver</a>
+                </form>
+            </div>
+        </div>
+    </section>
+</body>
+
+</html>

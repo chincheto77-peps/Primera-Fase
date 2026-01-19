@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Last-Modified" content="0">
+    <title>EJEMPLO APP WEB CON CRUD</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+    <style>
+        .oculto{
+            display: none;
+        }
+    </style>
+    <script>
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        onload=function(){
+            pedirComentarios();
+        }
+        function guardarComentario() {
+            var raw = JSON.stringify({
+                "usuario": document.getElementById("usuario").value,
+                "descripcion": document.getElementById("descripcion").value
+            });
+
+            var requestOptions = {
+                method: 'POST',
+                headers: myHeaders,
+                body: raw
+            };
+
+            fetch("/api/comentarios/", requestOptions)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status == "OK"){
+                        alert(`Comentario almacenado`);
+                        pedirComentarios();
+                    } else {
+                        alert(`El comentario no ha podio almacenarse`)
+                    }
+                })
+                .catch(error => console.log('error', error));
+        }
+        function pintarComentarios(lista){
+            let tbody=document.getElementsByTagName("tbody")[0];
+            tbody.innerText="";
+
+            lista.forEach(comentario => {
+                let texto=`<tr>
+                        <td>${comentario.usuario}</td>
+                        <td>${comentario.descripcion}</td>
+                        <td>
+                        </tr>`;
+                tbody.innerHTML+=texto                            
+            });
+        }
+        function pedirComentarios(){
+            var requestOptions = {
+                method: 'GET',
+                headers: myHeaders,
+            };
+
+            fetch("/api/comentarios/", requestOptions)
+                .then(response => response.json())
+                .then(result => {
+                    if (result){
+                        pintarComentarios(result);
+                    }
+                })
+                .catch(error => {
+                    console.log('error', error);
+                    alert("Ha habido un error al recuperar los comentarios. Refresque la página")
+                });
+        }
+
+    </script>
+</head>
+<body>
+    <section class="section">
+        <div class="columns">
+            <div class="column">
+                <h3 class="is-size-3">Comentarios</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripcion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                   </tbody>
+                </table>
+            </div>
+        </div>  
+    </section>   
+            <h3 class="is-size-3">Agregar Comentario</h3>
+                <label for="usuario">Usuario:</label>
+                <input required type="text" class="input" placeholder="usuario" name="usuario" id="usuario">
+                <label for="descripcion">Descripcion:</label>
+                <input required type="text" class="input" placeholder="Comentario" name="descripcion" id="descripcion">
+                <button type="button" onclick="guardarComentario()" class="button is-success mt-2">Guardar</button>
+
+        </div>  
+    </section>    
+</body>
+</html>
