@@ -6,11 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EJEMPLO APP WEB CON CRUD</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
-    <style>
-        .oculto{
-            display: none;
-        }
-    </style>
+    <link rel="stylesheet" href="../css/styles.css">
+  
     <script>
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
@@ -23,11 +20,12 @@
 
             lista.forEach(jugador => {
                 let texto=`<tr>
-                        <td><img src="${jugador.foto}" width="70"></td>
+                        <td><img src="${jugador.filefoto}" width="70"></td>
                         <td>${jugador.nombre}</td>
                         <td>${jugador.descripcion}</td>
                         <td>${jugador.estadisticas}</td>
                         <td>${jugador.valor_de_mercado}</td>
+                        <td>${jugador.valor_de_mercado*1.21}</td>
                         <td>`
                 texto+=`<a href="editar_jugador.html?id=${jugador.id}" class="button is-info">Editar</a>
                         </td>

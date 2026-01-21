@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS jugadores(
     nombre VARCHAR(255) NOT NULL,
     descripcion VARCHAR(255) NOT NULL,
     valor_de_mercado DECIMAL(9,2) NOT NULL,
-	foto VARCHAR(255),
+	filefoto VARCHAR(255),
     estadisticas VARCHAR(255),
     equipo BIGINT UNSIGNED
 );
@@ -32,7 +32,7 @@ INSERT INTO `equipos` (`id`, `nombre`, `descripcion`) VALUES
 (2, 'Real Monteverde', 'Equipo histórico de Monteverde'),
 (3, 'Deportivo Norte', 'Club emergente del norte');
 
-INSERT INTO `jugadores` (`nombre`, `descripcion`, `valor_de_mercado`, `foto`, `estadisticas`, `equipo`) VALUES
+INSERT INTO `jugadores` (`nombre`, `descripcion`, `valor_de_mercado`, `filefoto`, `estadisticas`, `equipo`) VALUES
 ('Luis Gómez', 'Delantero veloz', 1250000.00, '/imagenes/luis_gomez.jpg', 'goles:15,asistencias:5', 1),
 ('Miguel Fernández', 'Centrocampista creativo', 900000.00, '/imagenes/miguel_fernandez.jpg', 'pases_clave:40', 2),
 ('Carlos Ruiz', 'Defensa central sólido', 750000.00, '/imagenes/carlos_ruiz.jpg', 'intercepciones:60', 3),

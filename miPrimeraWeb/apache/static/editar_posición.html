@@ -11,6 +11,7 @@
     <meta http-equiv="Last-Modified" content="0">
     <title>EJEMPLO APP apache CON CRUD</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
     <script>
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
@@ -43,7 +44,7 @@
             document.getElementById("descripcion").value = jugador.descripcion;
             document.getElementById("estadisticas").value = jugador.estadisticas;
             document.getElementById("valor de mercado").value = jugador.valor_de_mercado;
-            document.getElementById("foto").src = jugador.foto;
+            document.getElementById("filefoto").src = jugador.filefoto;
         }
 
         function guardar() {
@@ -51,14 +52,14 @@
             let descripcion= document.getElementById("descripcion").value;
             let estadisticas = document.getElementById("estadisticas").value;
             let valor_de_mercado = document.getElementById("Valor de mercado").value;
-            let foto = document.getElementById("foto").value;
+            let filefoto = document.getElementById("filefoto").value;
             let datos = JSON.stringify({
                 "id": id,
                 "nombre": nombre,
                 "descripcion": descripcion,
                 "estadisticas": estadisticas,
                 "valor de mercado": valor_de_mercado,
-                "foto": foto
+                "filefoto": filefoto
             });
             var requestOptions = {
                 method: 'PUT',
@@ -119,10 +120,10 @@
                 <label for="estadisticas">Estadisticas</label>
                 <input required type="text" class="input" placeholder="Estadisticas" name="estadisticas" id="estadisticas">
                 <label for="valor_de_mercado">Valor del mercado</label>
-                <input required type="number" class="input" placeholder="Valor de mercado" name="valor de mercado" id="valor de mercado">
-                <input required type="text" class="input" placeholder="Foto" name="foto" id="foto">                
-                <input required type="file" class="input" placeholder="Archivo Foto" name="filefoto" id="filefoto">
-                <img src="#" alt="Foto" width="500" height="600" id="foto">
+                <input required type="number" class="input" placeholder="Valor_de_mercado" name="valor_de_mercado" id="valor_de_mercado">
+                <input required type="text" class="input" placeholder="Filefoto" name="filefoto" id="filefoto">                
+                <input required type="file" class="input" placeholder="Archivo Filefoto" name="filefoto" id="filefoto">
+                <img src="#" alt="Filefoto" width="500" height="600" id="filefoto">
                 <button type="button" onclick="guardar()" class="button is-success mt-2">Guardar</button>
                 <a href="jugadores.html" class="button is-primary mt-2">Volver</a>
                 </form>

@@ -4,91 +4,80 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta http-equiv="Last-Modified" content="0">
-    <title>EJEMPLO APP apache CON CRUD</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+    <title>EJEMPLO APP CRUD</title>
+    <link rel="stylesheet" href="./styles.css">
+    
     <script>
-        var myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        function guardar(){
-            let nombre=document.getElementById("nombre").value;
-            let descripcion=document.getElementById("descripcion").value;
-            let ingredientes =document.getElementById("ingredientes").value;
-            let precio=document.getElementById("precio").value;
-            let foto=document.getElementById("foto").value;
-            let datos=JSON.stringify({
-                "nombre":nombre,
-                "descripcion":descripcion,
-                "ingredientes":ingredientes,
-                "precio":precio,
-                "foto":foto
-            });
-            var requestOptions = {
-                method: 'POST',
-                headers: myHeaders,
-                body: datos
-            };
+function guardar(){
+    let formData = new FormData();
 
-            fetch("/api/jugadores/", requestOptions)
-                .then(response => response.json())
-                .then(result => {
-                    if (result.status == "OK"){
-                        alert("Jugador Fichado")
-                        location.href="jugadores.html"
-                    } else {
-                        alert("El jugador no ha podido ser fichado")
-                    }
-                })
-                .catch(error => {
-                    console.log('error', error);
-                    alert("Se ha producido un error y el jugador no ha podido ser fichado")
-                });
+    formData.append("nombre", document.getElementById("nombre").value);
+    formData.append("descripcion", document.getElementById("descripcion").value);
+    formData.append("estadisticas", document.getElementById("estadisticas").value);
+    formData.append("valor_de_mercado", document.getElementById("valor_de_mercado").value);
+    formData.append("filefoto", document.getElementById("filefoto").files[0]);
+
+    fetch("/api/jugadores/", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(result => {
+        if (result.status === "OK") {
+            alert("Jugador fichado");
+            location.href = "jugadores.html";
+        } else {
+            alert("El jugador no ha podido ser fichado");
         }
-    </script>
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error en la conexión");
+    });
+}
+</script>
+
 </head>
 <body>
-    <nav class="navbar is-warning" role="navigation" aria-label="main navigation">
-        <div class="navbar-brand">
-            <button class="navbar-burger is-warning button" aria-label="menu" aria-expanded="false"
-                data-target="navbarBasicExample">
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-            </button>
-        </div>
-        <div class="navbar-menu">
-            <div class="navbar-start">
-                <a class="navbar-item" href="jugadores.html">Jugadores</a>
-            </div>
-            <div class="navbar-end">
-                <div class="navbar-item">
-                </div>
-            </div>
-        </div>
+    <nav class="main-nav">
+        <a href="jugadores.html">Jugadores</a>
     </nav>
-  <section class="section">
-    <div class="columns">
-        <div class="column">
-            <h3 class="is-size-3">Fichar Jugador</h3>
-                <label for="nombre">Nombre:</label>
-                <input required type="text" class="input" placeholder="Nombre" name="nombre" id="nombre">
-                <label for="descripcion">Descripcion</label>
-                <input required type="text" class="input" placeholder="Descripcion" name="descripcion" id="descripcion">
-                <label for="ingredientesS">Estadisticas</label>
-                <input required type="text" class="input" placeholder="Ingredientes" name="ingredientes" id="ingredientes">
-                <label for="precio">Valor de Mercado</label>
-                <input required type="number" class="input" placeholder="Precio" name="precio" id="precio">
-                <label for="foto">Foto</label>
-                <input required type="text" class="input" placeholder="Foto" name="foto" id="foto">                
-                <input required type="file" class="input" placeholder="Archivo Foto" name="filefoto" id="filefoto">
-                <button type="button" onclick="guardar()" class="button is-success mt-2">Guardar</button>
-                <a href="jugadores.html" class="button is-primary mt-2">Volver</a>
+
+    <main class="container">
+        <div class="form-container">
+            <h3>Fichar Jugador</h3>
+            <form id="formulario-jugador">
+                <div class="form-group">
+                    <label for="nombre">Nombre:</label>
+                    <input required type="text" name="nombre" id="nombre" placeholder="Nombre completo">
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción:</label>
+                    <input required type="text" name="descripcion" id="descripcion" placeholder="Posición, equipo...">
+                </div>
+
+                <div class="form-group">
+                    <label for="estadisticas">Estadísticas:</label>
+                    <input required type="text" name="estadisticas" id="estadisticas" placeholder="Goles, asistencias...">
+                </div>
+
+                <div class="form-group">
+                    <label for="valor_de_mercado">Valor de Mercado (€):</label>
+                    <input required type="number" name="valor_de_mercado" id="valor_de_mercado">
+                </div>
+
+                <div class="form-group">
+                    <label for="filefoto">Archivo Filefoto:</label>
+                    <input required type="file" name="filefoto" id="filefoto">
+                </div>
+
+                <div class="actions">
+                    <button type="button" onclick="guardar()" class="btn-save">Guardar</button>
+                    <a href="jugadores.html" class="btn-back">Volver</a>
+                </div>
             </form>
         </div>
-    </div>
-</section>
+    </main>
 </body>
 </html>

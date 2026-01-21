@@ -6,3 +6,6 @@ COPY demo.apache.conf /usr/local/apache2/conf/demo.apache.conf
 COPY ./static/ /var/www/html
 RUN echo "Include /usr/local/apache2/conf/demo.apache.conf" \
     >> /usr/local/apache2/conf/httpd.conf
+
+# Ensure static files are world-readable so Apache can serve them
+RUN chmod -R a+rX /var/www/html || true

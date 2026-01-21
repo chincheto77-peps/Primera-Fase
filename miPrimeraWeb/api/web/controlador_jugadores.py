@@ -8,15 +8,15 @@ def convertir_jugador_a_json(jugador):
     d['nombre'] = jugador[1]
     d['descripcion'] = jugador[2]
     d['valor_de_mercado'] = float(jugador[3])
-    d['foto'] = jugador[4]
+    d['filefoto'] = jugador[4]
     d['estadisticas']=jugador[5]
     return d
 
-def insertar_jugador(nombre, descripcion, valor_de_mercado,foto,estadisticas):
+def insertar_jugador(nombre, descripcion, valor_de_mercado,filefoto,estadisticas):
     conexion = obtener_conexion()
     with conexion.cursor() as cursor:
-        cursor.execute("INSERT INTO jugadores(nombre, descripcion, valor_de_mercado,foto,estadisticas) VALUES (%s, %s, %s,%s,%s)",
-                       (nombre, descripcion, valor_de_mercado,foto,estadisticas))
+        cursor.execute("INSERT INTO jugadores(nombre, descripcion, valor_de_mercado,filefoto,estadisticas) VALUES (%s, %s, %s,%s,%s)",
+                       (nombre, descripcion, valor_de_mercado,filefoto,estadisticas))
     conexion.commit()
     conexion.close()
     ret={"status": "OK" }
@@ -28,7 +28,7 @@ def obtener_jugadores():
     try:
         conexion = obtener_conexion()
         with conexion.cursor() as cursor:
-            cursor.execute("SELECT id, nombre, descripcion, valor_de_mercado,foto,estadisticas FROM jugadores")
+            cursor.execute("SELECT id, nombre, descripcion, valor_de_mercado,filefoto,estadisticas FROM jugadores")
             jugadores = cursor.fetchall()
             if jugadores:
                 for jugador in jugadores:
@@ -45,7 +45,7 @@ def obtener_jugador_por_id(id):
     try:
         conexion = obtener_conexion()
         with conexion.cursor() as cursor:
-            cursor.execute("SELECT id, nombre, descripcion, valor_de_mercado,foto,estadisticas FROM jugadores WHERE id =" + id)
+            cursor.execute("SELECT id, nombre, descripcion, valor_de_mercado,filefoto,estadisticas FROM jugadores WHERE id =" + id)
             jugador = cursor.fetchone()
             if jugador is not None:
                 jugadorjson = convertir_jugador_a_json(jugador)
@@ -73,12 +73,12 @@ def eliminar_jugador(id):
         code=500
     return ret,code
 
-def actualizar_jugador(id, nombre, descripcion, valor_de_mercado, foto,estadisticas):
+def actualizar_jugador(id, nombre, descripcion, valor_de_mercado, filefoto,estadisticas):
     try:
         conexion = obtener_conexion()
         with conexion.cursor() as cursor:
-            cursor.execute("UPDATE jugadores SET nombre = %s, descripcion = %s, valor_de_mercado = %s, foto=%s, estadisticas=%s WHERE id = %s",
-                       (nombre, descripcion, valor_de_mercado, foto,estadisticas,id))
+            cursor.execute("UPDATE jugadores SET nombre = %s, descripcion = %s, valor_de_mercado = %s, filefoto=%s, estadisticas=%s WHERE id = %s",
+                       (nombre, descripcion, valor_de_mercado, filefoto,estadisticas,id))
             if cursor.rowcount == 1:
                 ret={"status": "OK" }
             else:
