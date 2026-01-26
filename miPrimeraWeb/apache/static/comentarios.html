@@ -23,9 +23,17 @@
             pedirComentarios();
         }
         function guardarComentario() {
+            var usuario = document.getElementById("usuario").value;
+            var descripcion = document.getElementById("descripcion").value;
+
+            if (!usuario || !descripcion) {
+                alert("Por favor, complete todos los campos antes de guardar el comentario.");
+                return;
+            }
+
             var raw = JSON.stringify({
-                "usuario": document.getElementById("usuario").value,
-                "descripcion": document.getElementById("descripcion").value
+                "usuario": usuario,
+                "descripcion": descripcion
             });
 
             var requestOptions = {
@@ -35,16 +43,24 @@
             };
 
             fetch("/api/comentarios/", requestOptions)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(result => {
-                    if (result.status == "OK"){
-                        alert(`Comentario almacenado`);
+                    if (result.status === "OK") {
+                        alert("Comentario almacenado");
                         pedirComentarios();
                     } else {
-                        alert(`El comentario no ha podio almacenarse`)
+                        alert("El comentario no ha podido almacenarse. Inténtelo de nuevo.");
                     }
                 })
-                .catch(error => console.log('error', error));
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("Ha ocurrido un error al guardar el comentario. Por favor, inténtelo más tarde.");
+                });
         }
         function pintarComentarios(lista){
             let tbody=document.getElementsByTagName("tbody")[0];

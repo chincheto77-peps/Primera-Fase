@@ -5,23 +5,24 @@ services:
     restart: always
     environment:
       MARIADB_ROOT_PASSWORD: 1234
-      MARIADB_USER: root
-      MARIADB_USER_PASSWORD: 1234
       MARIADB_DATABASE: ciber
     volumes:
       - mariadb_data:/var/lib/mysql
-      - ./Jugadores.sql://docker-entrypoint-initdb.d/Jugadores.sql:ro
-    user: mysql
+      - ./Jugadores.sql:/docker-entrypoint-initdb.d/Jugadores.sql:ro
+
   phpmyadmin:
     image: phpmyadmin
     container_name: phpmyadmin
     restart: always
     environment:
-      - PMA_HOST=mariadb
+      PMA_HOST: mariadb
+      PMA_USER: root
+      PMA_PASSWORD: 1234
     ports:
       - 9093:80
     depends_on:
       - mariadb
+
   python:
     build: ./api
     container_name: python
@@ -35,15 +36,16 @@ services:
       HOST: 0.0.0.0
     depends_on:
       - mariadb
+
   apache-waf:
-    build: ./apache #./waf/ en un futuro
+    build: ./apache
     ports:
       - 9090:80
     volumes:
       - ./apache:/var/www/html
     depends_on:
       - python
-    links:
-      - python
+
 volumes:
   mariadb_data:
+

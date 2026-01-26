@@ -25,6 +25,12 @@ CREATE TABLE IF NOT EXISTS titulos(
     fecha DATE NOT NULL,
     equipo BIGINT UNSIGNED
 );
+CREATE TABLE IF NOT EXISTS comentarios (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    usuario VARCHAR(255) NOT NULL,
+    descripcion TEXT NOT NULL
+);
+
 INSERT INTO `usuarios` (`usuario`, `clave`, `perfil`) VALUES ('root','1234', 'admin');
 
 INSERT INTO `equipos` (`id`, `nombre`, `descripcion`) VALUES
@@ -48,6 +54,7 @@ INSERT INTO `titulos` (`nombre`, `fecha`, `equipo`) VALUES
 ALTER TABLE equipos ENGINE=InnoDB;
 ALTER TABLE jugadores ENGINE=InnoDB;
 ALTER TABLE titulos ENGINE=InnoDB;
+ALTER TABLE comentarios ENGINE=InnoDB;
 
 -- Permitir NULL en las columnas equipo para poder usar ON DELETE SET NULL
 ALTER TABLE jugadores MODIFY COLUMN equipo BIGINT UNSIGNED NULL;

@@ -14,16 +14,17 @@ def insertar_comentario(usuario, descripcion):
     try:
         conexion = obtener_conexion()
         with conexion.cursor() as cursor:
-            cursor.execute("INSERT INTO comentarios(usuario, descripcion) VALUES ('"+ usuario +"','" + descripcion + "')")
+            query = "INSERT INTO comentarios(usuario, descripcion) VALUES (%s, %s)"
+            cursor.execute(query, (usuario, descripcion))
             conexion.commit()
         conexion.close()
-        ret={"status": "OK" }
-        code=200
-    except:
-        ret={"status": "ERROR" }
-        print("Excepcion al insertar un comentario", flush=True)
-        code=500   
-    return ret,code
+        ret = {"status": "OK"}
+        code = 200
+    except Exception as e:
+        ret = {"status": "ERROR", "message": str(e)}
+        print("Excepción al insertar un comentario:", e, flush=True)
+        code = 500
+    return ret, code
 
 def obtener_comentarios():
     comentariosjson=[]
