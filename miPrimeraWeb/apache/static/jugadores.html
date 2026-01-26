@@ -53,6 +53,10 @@
                     alert("Ha habido un error al recuperar los jugadores. Refresque la página")
                 });
         }
+        function destituirjugador(id) {
+                return destituirjugadores(id);
+            }
+
         function destituirjugadores(id){
             var requestOptions = {
                 method: 'DELETE',
