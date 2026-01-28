@@ -1,7 +1,7 @@
 services:
   mariadb:
     image: mariadb
-    container_name: mariadb
+    container_name: mariadb3
     restart: always
     environment:
       MARIADB_ROOT_PASSWORD: 1234
@@ -12,20 +12,20 @@ services:
 
   phpmyadmin:
     image: phpmyadmin
-    container_name: phpmyadmin
+    container_name: phpmyadminb3
     restart: always
     environment:
       PMA_HOST: mariadb
       PMA_USER: root
       PMA_PASSWORD: 1234
     ports:
-      - 9093:80
+      - 7103:80
     depends_on:
-      - mariadb
+      - mariadb3
 
   python:
     build: ./api
-    container_name: python
+    container_name: pythonb3
     environment:
       DB_USERNAME: root
       DB_PASSWORD: 1234
@@ -35,16 +35,17 @@ services:
       PORT: 8080
       HOST: 0.0.0.0
     depends_on:
-      - mariadb
+      - mariadb3
 
   apache-waf:
+    container_name: apacheb3
     build: ./apache
     ports:
-      - 9090:80
+      - 6103:80
     volumes:
       - ./apache:/var/www/html
     depends_on:
-      - python
+      - pythonb3
 
 volumes:
   mariadb_data:
