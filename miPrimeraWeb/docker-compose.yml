@@ -45,7 +45,7 @@ services:
     volumes:
       - ./apache:/var/www/html
     depends_on:
-      - pythonb
+      - python
 
 volumes:
   mariadb_data:
