@@ -21,7 +21,7 @@ services:
     ports:
       - 7103:80
     depends_on:
-      - mariadb3
+      - mariadb
 
   python:
     build: ./api
@@ -35,7 +35,7 @@ services:
       PORT: 8080
       HOST: 0.0.0.0
     depends_on:
-      - mariadb3
+      - mariadb
 
   apache-waf:
     container_name: apacheb3
@@ -45,7 +45,7 @@ services:
     volumes:
       - ./apache:/var/www/html
     depends_on:
-      - pythonb3
+      - pythonb
 
 volumes:
   mariadb_data:
