@@ -42,8 +42,6 @@ services:
     build: ./apache
     ports:
       - 6103:80
-    volumes:
-      - ./apache:/var/www/html
     depends_on:
       - python
 
