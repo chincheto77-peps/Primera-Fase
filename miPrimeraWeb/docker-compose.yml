@@ -1,23 +1,23 @@
 services:
   mariadb:
     image: mariadb
-    container_name: mariadb3
-    restart: always
+    container_name: mariadbb3
+    restart: unless-stopped
     environment:
-      MARIADB_ROOT_PASSWORD: 1234
-      MARIADB_DATABASE: ciber
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - mariadb-datab3:/var/lib/mysql
       - ./Jugadores.sql:/docker-entrypoint-initdb.d/Jugadores.sql:ro
 
   phpmyadmin:
     image: phpmyadmin
     container_name: phpmyadminb3
-    restart: always
+    restart: unless-stopped
     environment:
       PMA_HOST: mariadb
-      PMA_USER: root
-      PMA_PASSWORD: 1234
+      PMA_USER: ${PMA_USER}
+      PMA_PASSWORD: ${PMA_PASSWORD}
     ports:
       - 7103:80
     depends_on:
@@ -26,25 +26,24 @@ services:
   python:
     build: ./api
     container_name: pythonb3
+    restart: unless-stopped
     environment:
-      DB_USERNAME: root
-      DB_PASSWORD: 1234
-      DB_DATABASE: ciber
-      DB_HOST: mariadb
-      DB_PORT: 3306
-      PORT: 8080
-      HOST: 0.0.0.0
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
     depends_on:
       - mariadb
 
-  apache-waf:
-    container_name: apacheb3
+  apache:
     build: ./apache
+    container_name: apacheb3
+    restart: unless-stopped
     ports:
       - 6103:80
     depends_on:
       - python
 
 volumes:
-  mariadb_data:
-
+  mariadb-datab3:
