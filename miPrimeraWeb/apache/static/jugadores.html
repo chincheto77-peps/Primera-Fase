@@ -14,6 +14,11 @@
         onload=function(){
             clausulazojugadores();
         }
+        function calculariva(importe){
+             return importe*0.21
+        }
+
+                
         function pintarjugadores(lista){
             let tbody=document.getElementsByTagName("tbody")[0];
             tbody.innerText="";
@@ -25,7 +30,7 @@
                         <td>${jugador.descripcion}</td>
                         <td>${jugador.estadisticas}</td>
                         <td>${jugador.valor_de_mercado}</td>
-                        <td>${jugador.valor_de_mercado*1.21}</td>
+                        <td>${jugador.valor_de_mercado+calculariva(jugador.valor_de_mercado)}</td>
                         <td>`
                 texto+=`<a href="editar_jugador.html?id=${jugador.id}" class="button is-info">Editar</a>
                         </td>
