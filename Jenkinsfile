@@ -55,10 +55,15 @@ pipeline {
             }
           }
           stage('SonarQube') {
-            steps { 
-              sh 'echo sonar' 
+            steps {
+              script {
+                withSonarQubeEnv('SonarQube') {
+                sh "sonar-scanner"
+                }
+              }
             }
           }
+
           stage('SCA') {
             steps { 
               sh 'echo sca' 
