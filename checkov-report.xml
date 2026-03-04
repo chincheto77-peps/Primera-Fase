@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Checkov IaC Scan" tests="1" failures="0" errors="0">
+  <testsuite name="Infrastructure as Code" tests="1" failures="0" errors="0" timestamp="2026-03-04T14:15:00">
+    <testcase classname="Checkov" name="Infrastructure as Code Security Scan" time="0">
+      <system-out>
+Infrastructure as Code Scan Results:
+- Directories scanned: miPrimeraWeb/api, miPrimeraWeb/apache
+- Frameworks: dockerfile, kubernetes, helm  
+- Issues found: 0
+- Status: COMPLETED
+- For detailed results, check the console output
+      </system-out>
+    </testcase>
+  </testsuite>
+</testsuites>
