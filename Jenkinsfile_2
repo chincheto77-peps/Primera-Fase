@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     tools {
-      dockerTool "Docker"
+    dockerTool "Docker"
     }
+
     parameters {
       string(
        name: 'IMAGE_TAG_PYTHON',
@@ -27,6 +28,7 @@ pipeline {
       KUBERNETES_HOST = "10.227.87.80"
       PYTHON_IMAGE = 'python:3.11-slim'
       TEST_DIR = 'miPrimeraWeb/tests'
+      SCANNER_HOME = tool 'SonarScanner'
     }
 
     stages {
@@ -49,7 +51,8 @@ pipeline {
           sh """
             pip install --no-cache-dir pytest pytest-cov
             
-            cd miPrimeraWeb
+            export PYTHONPATH=\${WORKSPACE}/miPrimeraWeb:\${PYTHONPATH}
+            cd \${WORKSPACE}/miPrimeraWeb
             pytest tests --cov=api/web --cov-fail-under=1 --junitxml=pytest_results.xml
           """
           junit 'miPrimeraWeb/pytest_results.xml'
@@ -69,10 +72,15 @@ pipeline {
             }
           }
           stage('SonarQube') {
-            steps { 
-              sh 'echo sonar' 
+            steps {
+              script {
+                withSonarQubeEnv('SonarQube') {
+                sh "${SCANNER_HOME}/bin/sonar-scanner"
+                }
+              }
             }
           }
+
           stage('SCA') {
             steps { 
               sh 'echo sca' 
@@ -144,7 +152,7 @@ pipeline {
         when {
           expression { params.IMAGE_TAG_WAF?.trim() }
         }
-	      steps {
+          steps {
           script {
             // Escanear la imagen Docker
             sh 'echo aqui escaneo imagen waf'
