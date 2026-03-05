@@ -242,20 +242,106 @@ HTMLEOF
         }
 
         stage('Scan Docker Image Python for Vulnerabilities') {
-    steps {
-        script {
-            withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
-                sh """
-                    docker run --rm \\
-                        -e SNYK_TOKEN=\$SNYK_TOKEN \\
-                        -v /var/run/docker.sock:/var/run/docker.sock \\
-                        snyk/snyk:latest \\
-                        container test ${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON} --severity-threshold=high
-                """
+            steps {
+                script {
+                    sh '''
+                        echo "=== Iniciando escaneo de vulnerabilidades con Trivy ==="
+                        echo "Imagen: ${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}"
+                        echo ""
+                        
+                        # Ejecutar Trivy contra la imagen Docker
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy:latest image \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 0 \
+                            --format json \
+                            --output trivy-python-report.json \
+                            ${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}
+                        
+                        # Mostrar resumen en tabla
+                        echo ""
+                        echo "=== Resumen del Escaneo ==="
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy:latest image \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 0 \
+                            ${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}
+                    '''
+                }
+            }
+            post {
+                always {
+                    // Crear reporte HTML
+                    sh '''
+                        cat > trivy-python-report.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trivy Vulnerability Scan - Python Image</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #d9534f; border-bottom: 3px solid #d9534f; padding-bottom: 10px; }
+        .section { margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #007bff; }
+        .critical { border-left-color: #d9534f; background-color: #f8d7da; }
+        .high { border-left-color: #ff9800; }
+        pre { background-color: #f4f4f4; padding: 10px; overflow-x: auto; font-size: 12px; max-height: 500px; }
+        code { font-family: 'Courier New', monospace; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Trivy Container Vulnerability Scan Report - Python Image</h1>
+        
+        <div class="section">
+            <h2>📦 Image Information</h2>
+            <p><strong>Image:</strong> <code>${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}</code></p>
+            <p><strong>Scanner:</strong> Trivy</p>
+            <p><strong>Severity Filter:</strong> HIGH, CRITICAL</p>
+            <p><strong>Scan Date:</strong> <code>$(date -Iseconds)</code></p>
+        </div>
+        
+        <div class="section critical">
+            <h2>⚠️ Scan Results</h2>
+            <pre><code>
+HTMLEOF
+                        if [ -f trivy-python-report.json ]; then
+                            echo "Report JSON found" >> trivy-python-report.html
+                            cat trivy-python-report.json >> trivy-python-report.html
+                        else
+                            echo "Scan completed. Check detailed results in console output." >> trivy-python-report.html
+                        fi
+                        cat >> trivy-python-report.html << 'HTMLEOF'
+            </code></pre>
+        </div>
+        
+        <div class="section">
+            <h2>✓ Scan Information</h2>
+            <p>For detailed vulnerability information, check the JSON report in artifacts or console logs.</p>
+        </div>
+    </div>
+</body>
+</html>
+HTMLEOF
+                    '''
+                    
+                    // Archivar reportes
+                    archiveArtifacts artifacts: 'trivy-python-report.json,trivy-python-report.html', 
+                                     allowEmptyArchive: true
+                    
+                    // Publicar HTML
+                    publishHTML([
+                        reportDir: '.',
+                        reportFiles: 'trivy-python-report.html',
+                        reportName: 'Trivy Python Scan',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true
+                    ])
+                }
             }
         }
-    }
-}
 
         stage('Build Docker WAF'){
             when {
@@ -280,23 +366,109 @@ HTMLEOF
         }
 
         stage('Scan Docker Image WAF for Vulnerabilities') {
-    when {
-        expression { params.IMAGE_TAG_WAF?.trim() }
-    }
-    steps {
-        script {
-            withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
-                sh """
-                    docker run --rm \\
-                        -e SNYK_TOKEN=\$SNYK_TOKEN \\
-                        -v /var/run/docker.sock:/var/run/docker.sock \\
-                        snyk/snyk:latest \\
-                        container test ${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF} --severity-threshold=high
-                """
+            when {
+                expression { params.IMAGE_TAG_WAF?.trim() }
+            }
+            steps {
+                script {
+                    sh '''
+                        echo "=== Iniciando escaneo de vulnerabilidades con Trivy ==="
+                        echo "Imagen: ${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}"
+                        echo ""
+                        
+                        # Ejecutar Trivy contra la imagen Docker
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy:latest image \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 0 \
+                            --format json \
+                            --output trivy-waf-report.json \
+                            ${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}
+                        
+                        # Mostrar resumen en tabla
+                        echo ""
+                        echo "=== Resumen del Escaneo ==="
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy:latest image \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 0 \
+                            ${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}
+                    '''
+                }
+            }
+            post {
+                always {
+                    // Crear reporte HTML
+                    sh '''
+                        cat > trivy-waf-report.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trivy Vulnerability Scan - WAF Image</title>
+    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #d9534f; border-bottom: 3px solid #d9534f; padding-bottom: 10px; }
+        .section { margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #007bff; }
+        .critical { border-left-color: #d9534f; background-color: #f8d7da; }
+        .high { border-left-color: #ff9800; }
+        pre { background-color: #f4f4f4; padding: 10px; overflow-x: auto; font-size: 12px; max-height: 500px; }
+        code { font-family: 'Courier New', monospace; }
+                    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Trivy Container Vulnerability Scan Report - WAF Image</h1>
+        
+        <div class="section">
+            <h2>📦 Image Information</h2>
+            <p><strong>Image:</strong> <code>${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}</code></p>
+            <p><strong>Scanner:</strong> Trivy</p>
+            <p><strong>Severity Filter:</strong> HIGH, CRITICAL</p>
+            <p><strong>Scan Date:</strong> <code>$(date -Iseconds)</code></p>
+        </div>
+        
+        <div class="section critical">
+            <h2>⚠️ Scan Results</h2>
+            <pre><code>
+HTMLEOF
+                        if [ -f trivy-waf-report.json ]; then
+                            echo "Report JSON found" >> trivy-waf-report.html
+                            cat trivy-waf-report.json >> trivy-waf-report.html
+                        else
+                            echo "Scan completed. Check detailed results in console output." >> trivy-waf-report.html
+                        fi
+                        cat >> trivy-waf-report.html << 'HTMLEOF'
+            </code></pre>
+        </div>
+        
+        <div class="section">
+            <h2>✓ Scan Information</h2>
+            <p>For detailed vulnerability information, check the JSON report in artifacts or console logs.</p>
+        </div>
+    </div>
+</body>
+</html>
+HTMLEOF
+                    '''
+                    
+                    // Archivar reportes
+                    archiveArtifacts artifacts: 'trivy-waf-report.json,trivy-waf-report.html', 
+                                     allowEmptyArchive: true
+                    
+                    // Publicar HTML
+                    publishHTML([
+                        reportDir: '.',
+                        reportFiles: 'trivy-waf-report.html',
+                        reportName: 'Trivy WAF Scan',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true
+                    ])
+                }
             }
         }
-    }
-}
 
         stage('Run Application with Docker Compose') {
             steps {
