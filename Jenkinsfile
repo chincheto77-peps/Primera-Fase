@@ -1,21 +1,9 @@
 pipeline {
     agent any
 
-    tools {
-        dockerTool "Docker"
-    }
-
     parameters {
-        string(
-            name: 'IMAGE_TAG_PYTHON',
-            defaultValue: '',
-            description: 'Tag de la imagen Docker de python'
-        )
-        string(
-            name: 'IMAGE_TAG_WAF',
-            defaultValue: '',
-            description: 'Tag de la imagen Docker de waf'
-        )
+        string(name: 'IMAGE_TAG_PYTHON', defaultValue: '', description: 'Tag de la imagen Docker de python')
+        string(name: 'IMAGE_TAG_WAF', defaultValue: '', description: 'Tag de la imagen Docker de waf')
     }
 
     environment {
@@ -34,40 +22,31 @@ pipeline {
     }
 
     stages {
-        stage('Clonar repositorio') {
+
+        stage('Prueba unitaria') {
+            agent {
+                docker {
+                    image "${PYTHON_IMAGE}"
+                    reuseNode true
+                }
+            }
             steps {
-                git url: 'https://github.com/chincheto77-peps/Primera-Fase.git', 
-                    branch: 'main',
-                    credentialsId: 'GitHub'
+                sh """
+                    pip install --no-cache-dir pytest pytest-cov
+                    export PYTHONPATH="\${WORKSPACE}/miPrimeraWeb:\${PYTHONPATH}"
+                    cd "\${WORKSPACE}/miPrimeraWeb"
+                    pytest tests --cov=api/web --cov-fail-under=1 --junitxml=pytest_results.xml
+                """
+                junit 'miPrimeraWeb/pytest_results.xml'
             }
         }
 
-        stage('Prueba unitaria') {
-        agent {
-          docker {
-            image "${PYTHON_IMAGE}"
-            reuseNode true
-          }
-        }
-        steps {
-          sh """
-            pip install --no-cache-dir pytest pytest-cov
-            
-            export PYTHONPATH="\${WORKSPACE}/miPrimeraWeb:\${PYTHONPATH}"
-            cd "\${WORKSPACE}/miPrimeraWeb"
-            pytest tests --cov=api/web --cov-fail-under=1 --junitxml=pytest_results.xml
-          """
-          junit 'miPrimeraWeb/pytest_results.xml'
-        }
-      }
-      stage('Pruebas IaC') {
+        stage('Pruebas IaC') {
             steps {
                 script {
-                    // Ejecutar Checkov y guardar salida
                     sh '''
                         echo "=== Iniciando escaneo de IaC con Checkov ==="
-                        
-                        # Ejecutar Checkov en contenedor
+
                         docker run --rm \
                             -v "$(pwd)/miPrimeraWeb":/root/src \
                             bridgecrew/checkov:latest \
@@ -76,8 +55,7 @@ pipeline {
                             --framework dockerfile,kubernetes,helm \
                             -o cli \
                             --soft-fail > checkov-output.txt 2>&1 || true
-                        
-                        # Mostrar resumen
+
                         echo ""
                         echo "=== Resumen de Checkov ==="
                         tail -30 checkov-output.txt
@@ -86,9 +64,8 @@ pipeline {
             }
             post {
                 always {
-                    // Crear reporte HTML para visualización
                     sh '''
-                        cat > iac-scan-report.html << 'HTMLEOF'
+                        cat > iac-scan-report.html << 'EOF'
 <!DOCTYPE html>
 <html>
 <head>
@@ -107,17 +84,14 @@ pipeline {
 </head>
 <body>
     <div class="container">
-        <h1>🔒 Infrastructure as Code Security Scan Report</h1>
-        
+        <h1>🔒 Infrastructure as Code Scan Report</h1>
+
         <div class="section success">
             <h2>✓ Scan Status</h2>
             <p><strong>Status:</strong> COMPLETED</p>
-            <p class="timestamp"><strong>Timestamp:</strong> HTMLEOF
-                        date -Iseconds >> iac-scan-report.html
-                        cat >> iac-scan-report.html << 'HTMLEOF'
-</p>
+            <p class="timestamp"><strong>Timestamp:</strong> $(date -Iseconds)</p>
         </div>
-        
+
         <div class="section info">
             <h2>📁 Directories Scanned</h2>
             <ul>
@@ -125,7 +99,7 @@ pipeline {
                 <li><code>miPrimeraWeb/apache</code></li>
             </ul>
         </div>
-        
+
         <div class="section info">
             <h2>🛠️ Frameworks Analyzed</h2>
             <ul>
@@ -134,16 +108,16 @@ pipeline {
                 <li>Helm Charts</li>
             </ul>
         </div>
-        
+
         <div class="section">
             <h2>📊 Scan Output</h2>
             <pre><code>
-HTMLEOF
-                        cat checkov-output.txt >> iac-scan-report.html
-                        cat >> iac-scan-report.html << 'HTMLEOF'
+EOF
+                    cat checkov-output.txt >> iac-scan-report.html
+                    cat >> iac-scan-report.html << 'EOF'
             </code></pre>
         </div>
-        
+
         <div class="section success">
             <h2>✓ Report Generated</h2>
             <p>Checkov infrastructure as code security scan completed successfully.</p>
@@ -151,22 +125,15 @@ HTMLEOF
     </div>
 </body>
 </html>
-HTMLEOF
-                        echo "✓ HTML Report generated: iac-scan-report.html"
+EOF
                     '''
-                    
-                    // Archivar los archivos
-                    archiveArtifacts artifacts: 'checkov-output.txt,iac-scan-report.html', 
-                                     allowEmptyArchive: true
-                    
-                    // Publicar el HTML como un reporte
+
+                    archiveArtifacts artifacts: 'checkov-output.txt,iac-scan-report.html'
                     publishHTML([
                         reportDir: '.',
                         reportFiles: 'iac-scan-report.html',
                         reportName: 'IaC Scan Report',
-                        allowMissing: true,
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true
+                        keepAll: true
                     ])
                 }
             }
@@ -174,18 +141,20 @@ HTMLEOF
 
         stage('Static Analysis') {
             parallel {
+
                 stage('Detect Secrets') {
-    steps {
-        script {
-            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                sh '''
-                    detect-secrets scan . > detect-secrets.json
-                '''
-            }
-        }
-        archiveArtifacts artifacts: 'detect-secrets.json', allowEmptyArchive: true
-    }
-}
+                    steps {
+                        script {
+                            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                                sh '''
+                                    detect-secrets scan . > detect-secrets.json
+                                '''
+                            }
+                        }
+                        archiveArtifacts artifacts: 'detect-secrets.json', allowEmptyArchive: true
+                    }
+                }
+
                 stage('SonarQube') {
                     steps {
                         script {
@@ -195,7 +164,6 @@ HTMLEOF
                         }
                     }
                 }
-                
             }
         }
 
@@ -211,19 +179,19 @@ HTMLEOF
             }
         }
 
-        stage('Build Docker python'){
-            steps{
-                script{
-                    dockerImagePython= docker.build("${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}", "miPrimeraWeb/api")
+        stage('Build Docker python') {
+            steps {
+                script {
+                    dockerImagePython = docker.build("${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}", "miPrimeraWeb/api")
                 }
             }
         }
 
-        stage('Push Docker python'){
-            steps{
-                script{
+        stage('Push Docker python') {
+            steps {
+                script {
                     dockerImagePython.push(FINAL_IMAGE_TAG_PYTHON)
-                } 
+                }
             }
         }
 
@@ -233,9 +201,7 @@ HTMLEOF
                     sh '''
                         echo "=== Iniciando escaneo de vulnerabilidades con Trivy ==="
                         echo "Imagen: ${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}"
-                        echo ""
-                        
-                        # Ejecutar Trivy contra la imagen Docker
+
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
                             aquasec/trivy:latest image \
@@ -244,10 +210,7 @@ HTMLEOF
                             --format json \
                             --output trivy-python-report.json \
                             ${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}
-                        
-                        # Mostrar resumen en tabla
-                        echo ""
-                        echo "=== Resumen del Escaneo ==="
+
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
                             aquasec/trivy:latest image \
@@ -259,9 +222,8 @@ HTMLEOF
             }
             post {
                 always {
-                    // Crear reporte HTML
                     sh '''
-                        cat > trivy-python-report.html << 'HTMLEOF'
+                        cat > trivy-python-report.html << 'EOF'
 <!DOCTYPE html>
 <html>
 <head>
@@ -280,7 +242,7 @@ HTMLEOF
 <body>
     <div class="container">
         <h1>🔍 Trivy Container Vulnerability Scan Report - Python Image</h1>
-        
+
         <div class="section">
             <h2>📦 Image Information</h2>
             <p><strong>Image:</strong> <code>${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}</code></p>
@@ -288,21 +250,21 @@ HTMLEOF
             <p><strong>Severity Filter:</strong> HIGH, CRITICAL</p>
             <p><strong>Scan Date:</strong> <code>$(date -Iseconds)</code></p>
         </div>
-        
+
         <div class="section critical">
             <h2>⚠️ Scan Results</h2>
             <pre><code>
-HTMLEOF
-                        if [ -f trivy-python-report.json ]; then
-                            echo "Report JSON found" >> trivy-python-report.html
-                            cat trivy-python-report.json >> trivy-python-report.html
-                        else
-                            echo "Scan completed. Check detailed results in console output." >> trivy-python-report.html
-                        fi
-                        cat >> trivy-python-report.html << 'HTMLEOF'
+EOF
+                    if [ -f trivy-python-report.json ]; then
+                        echo "Report JSON found" >> trivy-python-report.html
+                        cat trivy-python-report.json >> trivy-python-report.html
+                    else
+                        echo "Scan completed. Check detailed results in console output." >> trivy-python-report.html
+                    fi
+                    cat >> trivy-python-report.html << 'EOF'
             </code></pre>
         </div>
-        
+
         <div class="section">
             <h2>✓ Scan Information</h2>
             <p>For detailed vulnerability information, check the JSON report in artifacts or console logs.</p>
@@ -310,60 +272,46 @@ HTMLEOF
     </div>
 </body>
 </html>
-HTMLEOF
+EOF
                     '''
-                    
-                    // Archivar reportes
-                    archiveArtifacts artifacts: 'trivy-python-report.json,trivy-python-report.html', 
-                                     allowEmptyArchive: true
-                    
-                    // Publicar HTML
+
+                    archiveArtifacts artifacts: 'trivy-python-report.json,trivy-python-report.html'
                     publishHTML([
                         reportDir: '.',
                         reportFiles: 'trivy-python-report.html',
                         reportName: 'Trivy Python Scan',
-                        allowMissing: true,
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true
+                        keepAll: true
                     ])
                 }
             }
         }
 
-        stage('Build Docker WAF'){
-            when {
-                expression { params.IMAGE_TAG_WAF?.trim() }
-            } 
-            steps{
-                script{
-                    dockerImageWaf= docker.build("${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}", "miPrimeraWeb/apache")
+        stage('Build Docker WAF') {
+            when { expression { params.IMAGE_TAG_WAF?.trim() } }
+            steps {
+                script {
+                    dockerImageWaf = docker.build("${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}", "miPrimeraWeb/apache")
                 }
             }
         }
 
-        stage('Push Docker waf'){
-            when {
-                expression { params.IMAGE_TAG_WAF?.trim() }
-            }
-            steps{
-                script{
+        stage('Push Docker waf') {
+            when { expression { params.IMAGE_TAG_WAF?.trim() } }
+            steps {
+                script {
                     dockerImageWaf.push(FINAL_IMAGE_TAG_WAF)
                 }
             }
         }
 
         stage('Scan Docker Image WAF for Vulnerabilities') {
-            when {
-                expression { params.IMAGE_TAG_WAF?.trim() }
-            }
+            when { expression { params.IMAGE_TAG_WAF?.trim() } }
             steps {
                 script {
                     sh '''
                         echo "=== Iniciando escaneo de vulnerabilidades con Trivy ==="
                         echo "Imagen: ${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}"
-                        echo ""
-                        
-                        # Ejecutar Trivy contra la imagen Docker
+
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
                             aquasec/trivy:latest image \
@@ -372,10 +320,7 @@ HTMLEOF
                             --format json \
                             --output trivy-waf-report.json \
                             ${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}
-                        
-                        # Mostrar resumen en tabla
-                        echo ""
-                        echo "=== Resumen del Escaneo ==="
+
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
                             aquasec/trivy:latest image \
@@ -387,15 +332,14 @@ HTMLEOF
             }
             post {
                 always {
-                    // Crear reporte HTML
                     sh '''
-                        cat > trivy-waf-report.html << 'HTMLEOF'
+                        cat > trivy-waf-report.html << 'EOF'
 <!DOCTYPE html>
 <html>
 <head>
     <title>Trivy Vulnerability Scan - WAF Image</title>
     <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
         .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         h1 { color: #d9534f; border-bottom: 3px solid #d9534f; padding-bottom: 10px; }
         .section { margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #007bff; }
@@ -403,12 +347,12 @@ HTMLEOF
         .high { border-left-color: #ff9800; }
         pre { background-color: #f4f4f4; padding: 10px; overflow-x: auto; font-size: 12px; max-height: 500px; }
         code { font-family: 'Courier New', monospace; }
-                    </style>
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>🔍 Trivy Container Vulnerability Scan Report - WAF Image</h1>
-        
+
         <div class="section">
             <h2>📦 Image Information</h2>
             <p><strong>Image:</strong> <code>${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}</code></p>
@@ -416,21 +360,21 @@ HTMLEOF
             <p><strong>Severity Filter:</strong> HIGH, CRITICAL</p>
             <p><strong>Scan Date:</strong> <code>$(date -Iseconds)</code></p>
         </div>
-        
+
         <div class="section critical">
             <h2>⚠️ Scan Results</h2>
             <pre><code>
-HTMLEOF
-                        if [ -f trivy-waf-report.json ]; then
-                            echo "Report JSON found" >> trivy-waf-report.html
-                            cat trivy-waf-report.json >> trivy-waf-report.html
-                        else
-                            echo "Scan completed. Check detailed results in console output." >> trivy-waf-report.html
-                        fi
-                        cat >> trivy-waf-report.html << 'HTMLEOF'
+EOF
+                    if [ -f trivy-waf-report.json ]; then
+                        echo "Report JSON found" >> trivy-waf-report.html
+                        cat trivy-waf-report.json >> trivy-waf-report.html
+                    else
+                        echo "Scan completed. Check detailed results in console output." >> trivy-waf-report.html
+                    fi
+                    cat >> trivy-waf-report.html << 'EOF'
             </code></pre>
         </div>
-        
+
         <div class="section">
             <h2>✓ Scan Information</h2>
             <p>For detailed vulnerability information, check the JSON report in artifacts or console logs.</p>
@@ -438,21 +382,15 @@ HTMLEOF
     </div>
 </body>
 </html>
-HTMLEOF
+EOF
                     '''
-                    
-                    // Archivar reportes
-                    archiveArtifacts artifacts: 'trivy-waf-report.json,trivy-waf-report.html', 
-                                     allowEmptyArchive: true
-                    
-                    // Publicar HTML
+
+                    archiveArtifacts artifacts: 'trivy-waf-report.json,trivy-waf-report.html'
                     publishHTML([
                         reportDir: '.',
                         reportFiles: 'trivy-waf-report.html',
                         reportName: 'Trivy WAF Scan',
-                        allowMissing: true,
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true
+                        keepAll: true
                     ])
                 }
             }
@@ -489,8 +427,8 @@ HTMLEOF
 
         stage('Deploy en Kubernetes') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'Kubernetes', 
-                                                  usernameVariable: 'JUMP_USER', 
+                withCredentials([usernamePassword(credentialsId: 'Kubernetes',
+                                                  usernameVariable: 'JUMP_USER',
                                                   passwordVariable: 'JUMP_PASS')]) {
                     sh """
                         sshpass -p '$JUMP_PASS' ssh -o StrictHostKeyChecking=no $JUMP_USER@$KUBERNETES_HOST \\
@@ -527,19 +465,11 @@ HTMLEOF
 
     post {
         always {
-            script {
-                if (env.WORKSPACE) {
-                    cleanWs()
-                } else {
-                    echo 'No hay workspace, se omite cleanWs'
-                }
-            }
+            cleanWs()
         }
-
         success {
             echo 'Pipeline correcto!'
         }
-
         failure {
             echo 'Pipeline fallo!'
         }
