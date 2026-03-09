@@ -70,70 +70,28 @@ pipeline {
 <html>
 <head>
     <title>Infrastructure as Code Scan Report</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
-        .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { color: #333; border-bottom: 3px solid #007bff; padding-bottom: 10px; }
-        .section { margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #007bff; }
-        .success { border-left-color: #28a745; }
-        .info { border-left-color: #17a2b8; }
-        pre { background-color: #f4f4f4; padding: 10px; overflow-x: auto; font-size: 12px; max-height: 400px; }
-        code { font-family: 'Courier New', monospace; }
-        .timestamp { color: #666; font-size: 0.9em; }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔒 Infrastructure as Code Scan Report</h1>
-
-        <div class="section success">
-            <h2>✓ Scan Status</h2>
-            <p><strong>Status:</strong> COMPLETED</p>
-            <p class="timestamp"><strong>Timestamp:</strong> $(date -Iseconds)</p>
-        </div>
-
-        <div class="section info">
-            <h2>📁 Directories Scanned</h2>
-            <ul>
-                <li><code>miPrimeraWeb/api</code></li>
-                <li><code>miPrimeraWeb/apache</code></li>
-            </ul>
-        </div>
-
-        <div class="section info">
-            <h2>🛠️ Frameworks Analyzed</h2>
-            <ul>
-                <li>Dockerfile</li>
-                <li>Kubernetes</li>
-                <li>Helm Charts</li>
-            </ul>
-        </div>
-
-        <div class="section">
-            <h2>📊 Scan Output</h2>
-            <pre><code>
+<h1>IaC Scan Report</h1>
+<pre>
 EOF
                     cat checkov-output.txt >> iac-scan-report.html
                     cat >> iac-scan-report.html << 'EOF'
-            </code></pre>
-        </div>
-
-        <div class="section success">
-            <h2>✓ Report Generated</h2>
-            <p>Checkov infrastructure as code security scan completed successfully.</p>
-        </div>
-    </div>
+</pre>
 </body>
 </html>
 EOF
                     '''
 
                     archiveArtifacts artifacts: 'checkov-output.txt,iac-scan-report.html'
+
                     publishHTML([
                         reportDir: '.',
                         reportFiles: 'iac-scan-report.html',
                         reportName: 'IaC Scan Report',
-                        keepAll: true
+                        allowMissing: true,
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true
                     ])
                 }
             }
@@ -199,9 +157,6 @@ EOF
             steps {
                 script {
                     sh '''
-                        echo "=== Iniciando escaneo de vulnerabilidades con Trivy ==="
-                        echo "Imagen: ${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}"
-
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
                             aquasec/trivy:latest image \
@@ -209,13 +164,6 @@ EOF
                             --exit-code 0 \
                             --format json \
                             --output trivy-python-report.json \
-                            ${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}
-
-                        docker run --rm \
-                            -v /var/run/docker.sock:/var/run/docker.sock \
-                            aquasec/trivy:latest image \
-                            --severity HIGH,CRITICAL \
-                            --exit-code 0 \
                             ${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}
                     '''
                 }
@@ -226,61 +174,27 @@ EOF
                         cat > trivy-python-report.html << 'EOF'
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Trivy Vulnerability Scan - Python Image</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
-        .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { color: #d9534f; border-bottom: 3px solid #d9534f; padding-bottom: 10px; }
-        .section { margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #007bff; }
-        .critical { border-left-color: #d9534f; background-color: #f8d7da; }
-        .high { border-left-color: #ff9800; }
-        pre { background-color: #f4f4f4; padding: 10px; overflow-x: auto; font-size: 12px; max-height: 500px; }
-        code { font-family: 'Courier New', monospace; }
-    </style>
-</head>
 <body>
-    <div class="container">
-        <h1>🔍 Trivy Container Vulnerability Scan Report - Python Image</h1>
-
-        <div class="section">
-            <h2>📦 Image Information</h2>
-            <p><strong>Image:</strong> <code>${DOCKER_IMAGE_PYTHON}:${FINAL_IMAGE_TAG_PYTHON}</code></p>
-            <p><strong>Scanner:</strong> Trivy</p>
-            <p><strong>Severity Filter:</strong> HIGH, CRITICAL</p>
-            <p><strong>Scan Date:</strong> <code>$(date -Iseconds)</code></p>
-        </div>
-
-        <div class="section critical">
-            <h2>⚠️ Scan Results</h2>
-            <pre><code>
+<h1>Trivy Python Report</h1>
+<pre>
 EOF
-                    if [ -f trivy-python-report.json ]; then
-                        echo "Report JSON found" >> trivy-python-report.html
-                        cat trivy-python-report.json >> trivy-python-report.html
-                    else
-                        echo "Scan completed. Check detailed results in console output." >> trivy-python-report.html
-                    fi
+                    cat trivy-python-report.json >> trivy-python-report.html
                     cat >> trivy-python-report.html << 'EOF'
-            </code></pre>
-        </div>
-
-        <div class="section">
-            <h2>✓ Scan Information</h2>
-            <p>For detailed vulnerability information, check the JSON report in artifacts or console logs.</p>
-        </div>
-    </div>
+</pre>
 </body>
 </html>
 EOF
                     '''
 
                     archiveArtifacts artifacts: 'trivy-python-report.json,trivy-python-report.html'
+
                     publishHTML([
                         reportDir: '.',
                         reportFiles: 'trivy-python-report.html',
                         reportName: 'Trivy Python Scan',
-                        keepAll: true
+                        allowMissing: true,
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true
                     ])
                 }
             }
@@ -309,9 +223,6 @@ EOF
             steps {
                 script {
                     sh '''
-                        echo "=== Iniciando escaneo de vulnerabilidades con Trivy ==="
-                        echo "Imagen: ${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}"
-
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
                             aquasec/trivy:latest image \
@@ -319,13 +230,6 @@ EOF
                             --exit-code 0 \
                             --format json \
                             --output trivy-waf-report.json \
-                            ${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}
-
-                        docker run --rm \
-                            -v /var/run/docker.sock:/var/run/docker.sock \
-                            aquasec/trivy:latest image \
-                            --severity HIGH,CRITICAL \
-                            --exit-code 0 \
                             ${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}
                     '''
                 }
@@ -336,61 +240,27 @@ EOF
                         cat > trivy-waf-report.html << 'EOF'
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Trivy Vulnerability Scan - WAF Image</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
-        .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { color: #d9534f; border-bottom: 3px solid #d9534f; padding-bottom: 10px; }
-        .section { margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #007bff; }
-        .critical { border-left-color: #d9534f; background-color: #f8d7da; }
-        .high { border-left-color: #ff9800; }
-        pre { background-color: #f4f4f4; padding: 10px; overflow-x: auto; font-size: 12px; max-height: 500px; }
-        code { font-family: 'Courier New', monospace; }
-    </style>
-</head>
 <body>
-    <div class="container">
-        <h1>🔍 Trivy Container Vulnerability Scan Report - WAF Image</h1>
-
-        <div class="section">
-            <h2>📦 Image Information</h2>
-            <p><strong>Image:</strong> <code>${DOCKER_IMAGE_WAF}:${FINAL_IMAGE_TAG_WAF}</code></p>
-            <p><strong>Scanner:</strong> Trivy</p>
-            <p><strong>Severity Filter:</strong> HIGH, CRITICAL</p>
-            <p><strong>Scan Date:</strong> <code>$(date -Iseconds)</code></p>
-        </div>
-
-        <div class="section critical">
-            <h2>⚠️ Scan Results</h2>
-            <pre><code>
+<h1>Trivy WAF Report</h1>
+<pre>
 EOF
-                    if [ -f trivy-waf-report.json ]; then
-                        echo "Report JSON found" >> trivy-waf-report.html
-                        cat trivy-waf-report.json >> trivy-waf-report.html
-                    else
-                        echo "Scan completed. Check detailed results in console output." >> trivy-waf-report.html
-                    fi
+                    cat trivy-waf-report.json >> trivy-waf-report.html
                     cat >> trivy-waf-report.html << 'EOF'
-            </code></pre>
-        </div>
-
-        <div class="section">
-            <h2>✓ Scan Information</h2>
-            <p>For detailed vulnerability information, check the JSON report in artifacts or console logs.</p>
-        </div>
-    </div>
+</pre>
 </body>
 </html>
 EOF
                     '''
 
                     archiveArtifacts artifacts: 'trivy-waf-report.json,trivy-waf-report.html'
+
                     publishHTML([
                         reportDir: '.',
                         reportFiles: 'trivy-waf-report.html',
                         reportName: 'Trivy WAF Scan',
-                        keepAll: true
+                        allowMissing: true,
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true
                     ])
                 }
             }
@@ -437,6 +307,7 @@ EOF
                             -n grupob3 && \\
                           kubectl rollout status deployment/python -n grupob3"
                     """
+
                     script {
                         if (params.IMAGE_TAG_WAF?.trim()) {
                             sh """
